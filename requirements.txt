@@ -8,3 +8,4 @@ numpy
 pytesseract
 google-generativeai
 streamlit-aggrid
+python-dotenv
