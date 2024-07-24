@@ -11,7 +11,7 @@ import pytesseract
 import google.generativeai as genai
 
 # Specify the Path to the Tesseract Executable
-pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+#pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
 GOOGLE_API_KEY="AIzaSyAvLwL3LLcJ_yPLFd7S5zlQtQu0FF1lrPE"
 genai.configure(api_key=GOOGLE_API_KEY)
