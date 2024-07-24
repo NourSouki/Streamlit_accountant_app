@@ -1,0 +1,10 @@
+streamlit
+Pillow
+pandas
+fitz
+PyMuPDF
+opencv-python-headless
+numpy
+pytesseract
+google-generativeai
+streamlit-aggrid
