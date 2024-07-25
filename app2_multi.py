@@ -129,9 +129,9 @@ def save_response_to_db(cursor, invoice_name, question, response_text):
     cursor.execute('INSERT INTO invoices (invoice_name, question, response) VALUES (?, ?, ?)', (invoice_name, question, response_text))
     cursor.connection.commit()
 
-def fetch_all_responses():
-    c.execute('SELECT * FROM invoices')
-    rows = c.fetchall()
+def fetch_all_responses(connection):
+    connection.execute('SELECT * FROM invoices')
+    rows = connection.fetchall()
     return rows
 
 def handle_grid_update(grid_update_event):
