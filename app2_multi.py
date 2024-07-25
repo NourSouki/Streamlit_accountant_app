@@ -2,7 +2,7 @@ import streamlit as st
 from PIL import Image
 from io import BytesIO
 import pandas as pd
-#import fitz  # PyMuPDF
+import fitz  # PyMuPDF
 import sqlite3
 from st_aggrid import AgGrid, GridOptionsBuilder, ColumnsAutoSizeMode, GridUpdateMode
 import cv2
