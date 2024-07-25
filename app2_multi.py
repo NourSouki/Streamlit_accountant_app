@@ -182,7 +182,7 @@ def process_file(uploaded_file, selected_questions,cursor):
                 st.error(f"No images found in {uploaded_file.name}")
                 return
         """
-        elif uploaded_file.type in ['image/jpeg', 'image/png']:
+        if uploaded_file.type in ['image/jpeg', 'image/png']:
             image = Image.open(uploaded_file)
             image_placeholder.image(image, caption=f'Uploaded Image {uploaded_file.name}', use_column_width=True)
 
