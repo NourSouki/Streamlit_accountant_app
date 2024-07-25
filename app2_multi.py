@@ -22,10 +22,11 @@ with open('config.yaml') as file:
 
 # Create an authenticator object
 authenticator = stauth.Authenticate(
-    credentials=config['credentials'],
-    cookie_name='some_cookie_name',
-    key='some_signature_key',
-    cookie_expiry_days=config['cookie']['expiry_days']
+    config['credentials'],
+    config['cookie']['name'],
+    config['cookie']['key'],
+    config['cookie']['expiry_days'],
+    config['pre-authorized']
 )
 
 # Login
