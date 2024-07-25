@@ -33,7 +33,7 @@ fields = {
     'username': 'Username',
     'password': 'Password'
 }
-name, authentication_status, username = authenticator.login(fields)
+name, authentication_status, username = authenticator.login()
 
 if authentication_status:
     authenticator.logout('Logout', 'main')
