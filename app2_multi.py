@@ -1,4 +1,4 @@
-import streamlit as st
+#import streamlit as st
 from PIL import Image
 from io import BytesIO
 import pandas as pd
@@ -14,7 +14,7 @@ import os
 import yaml
 from yaml.loader import SafeLoader
 
-hashed_passwords = stauth.Hasher(['abc', 'def']).generate()
+#hashed_passwords = stauth.Hasher(['abc', 'def']).generate()
 
 with open('../config.yaml') as file:
     config = yaml.load(file, Loader=SafeLoader)
