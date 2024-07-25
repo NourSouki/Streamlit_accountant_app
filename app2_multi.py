@@ -12,12 +12,18 @@ import google.generativeai as genai
 import streamlit_authenticator as stauth
 import os
 
-# Define usernames and passwords
+# Authentication setup
 usernames = ['user1', 'user2']
 passwords = ['password1', 'password2']
 
 # Create an authenticator object
-authenticator = stauth.Authenticate(usernames, passwords, 'some_cookie_name', 'some_signature_key', cookie_expiry_days=30)
+authenticator = stauth.Authenticate(
+    usernames=usernames,
+    passwords=passwords,
+    cookie_name='some_cookie_name',
+    key='some_signature_key',
+    cookie_expiry_days=30
+)
 
 # Login
 name, authentication_status, username = authenticator.login('Login', 'main')
