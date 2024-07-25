@@ -11,35 +11,28 @@ import pytesseract
 import google.generativeai as genai
 import streamlit_authenticator as stauth
 import os
+import yaml
+from yaml.loader import SafeLoader
 
-# Authentication setup
-credentials = {
-    "usernames": {
-        "user1": {
-            "name": "User One",
-            "password": "password1"
-        },
-        "user2": {
-            "name": "User Two",
-            "password": "password2"
-        }
-    }
-}
+hashed_passwords = stauth.Hasher(['abc', 'def']).generate()
 
-# Create an authenticator object
-authenticator = stauth.Authenticate(
-    credentials=credentials,
-    cookie_name='some_cookie_name',
-    key='some_signature_key',
-    cookie_expiry_days=30
+with open('../config.yaml') as file:
+    config = yaml.load(file, Loader=SafeLoader)
+    
+authenticator = Authenticate(
+    config['credentials'],
+    config['cookie']['name'],
+    config['cookie']['key'],
+    config['cookie']['expiry_days'],
+    config['preauthorized']
 )
 
-# Login
 name, authentication_status, username = authenticator.login('Login', 'main')
 
 if authentication_status:
+    authenticator.logout('Logout', 'main')
     st.write(f'Welcome *{name}*')
-    st.sidebar.success('You are logged in')
+    st.title('Some content')
 elif authentication_status == False:
     st.error('Username/password is incorrect')
 elif authentication_status == None:
