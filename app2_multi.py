@@ -2,7 +2,7 @@ import streamlit as st
 from PIL import Image
 from io import BytesIO
 import pandas as pd
-import fitz  # PyMuPDF
+#import fitz  # PyMuPDF
 import sqlite3
 from st_aggrid import AgGrid, GridOptionsBuilder, ColumnsAutoSizeMode, GridUpdateMode
 import cv2
@@ -75,7 +75,7 @@ quest_front_back={'Tout extraire':'Tout extraire','TVA':'Assujetti à la TVA ?',
                   'Nom et Prénom': 'Nom et Prénom première ligne','Raison Sociale':'Raison Sociale deuxième ligne',
                   'Activité':'Activité','Date de début de l\'activité':'Date de début de l\'activité',
                   "Adresse":"Adresse","Question Personnalisée":"Other"}
-
+"""
 def extract_images_from_pdf(pdf_file):
     images = []
     pdf = fitz.open(stream=pdf_file.read(), filetype="pdf")
@@ -89,7 +89,7 @@ def extract_images_from_pdf(pdf_file):
             image = Image.open(BytesIO(image_bytes))
             images.append(image)
     return images
-
+"""
 def perform_ocr(image):
     gray_image = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
     _, thresh_image = cv2.threshold(gray_image, 150, 255, cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
@@ -172,6 +172,7 @@ def process_file(uploaded_file, selected_questions,cursor):
         Response: "Non assujetti à la TVA" but it depends on the uploaded invoices.
         """
         image_placeholder = st.empty()
+        """
         if uploaded_file.type == 'application/pdf':
             pdf_images = extract_images_from_pdf(uploaded_file)
             if pdf_images:
@@ -180,7 +181,7 @@ def process_file(uploaded_file, selected_questions,cursor):
             else:
                 st.error(f"No images found in {uploaded_file.name}")
                 return
-
+        """
         elif uploaded_file.type in ['image/jpeg', 'image/png']:
             image = Image.open(uploaded_file)
             image_placeholder.image(image, caption=f'Uploaded Image {uploaded_file.name}', use_column_width=True)
@@ -228,7 +229,7 @@ if authentication_status:
     
     selected_questions= [quest_front_back[quest] for quest in select_questions]
     
-    uploaded_files = st.file_uploader("Upload Invoice Images/Pdfs", type=['jpg', 'png', 'pdf'], accept_multiple_files=True)
+    uploaded_files = st.file_uploader("Upload Invoice Images/Pdfs", type=['jpg', 'png'], accept_multiple_files=True) #, 'pdf'
     # Initialize lists to track processed and unprocessed files
     processed_files = []
     unprocessed_files = [file.name for file in uploaded_files] if uploaded_files else []
