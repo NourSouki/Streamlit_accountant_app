@@ -59,18 +59,6 @@ def get_user_db(username):
     conn = sqlite3.connect(db_path)
     return conn
 
-# Get the database connection for the logged-in user
-if authentication_status:
-    conn = get_user_db(username)
-    c = conn.cursor()
-
-    # Create table if not exists
-    c.execute('''
-        CREATE TABLE IF NOT EXISTS invoices
-        (id INTEGER PRIMARY KEY, invoice_name TEXT, question TEXT, response TEXT)
-    ''')
-    conn.commit()
-
 # Initialize session state variables if they don't already exist
 if 'responses_deleted' not in st.session_state:
     st.session_state.responses_deleted = False
@@ -201,17 +189,29 @@ def process_file(uploaded_file, selected_questions,cursor):
             if selected_question == 'Tout extraire':
                 for quest in questions_back[1:-1]:
                     gemini_response = answer_question(quest, image, uploaded_file.name)
-                    save_response_to_db(cursor, uploaded_file.name, quest_back_front[quest], gemini_response)
+                    response_text = gemini_response if gemini_response else 'None'
+                    save_response_to_db(cursor, uploaded_file.name, quest_back_front[quest], response_text)
                 break
             else:
                 gemini_response = answer_question(selected_question, image, uploaded_file.name)
-                save_response_to_db(cursor, uploaded_file.name, quest_back_front[selected_question], gemini_response)
+                response_text = gemini_response if gemini_response else 'None'
+                save_response_to_db(cursor, uploaded_file.name, quest_back_front[selected_question], response_text)
         st.success(f"Response for {uploaded_file.name} saved successfully.")
         image_placeholder.empty()
     except Exception as e:
         st.error(f"Error processing {uploaded_file.name}: {e}")
-
+        
+# Get the database connection for the logged-in user
 if authentication_status:
+    conn = get_user_db(username)
+    c = conn.cursor()
+
+    # Create table if not exists
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS invoices
+        (id INTEGER PRIMARY KEY, invoice_name TEXT, question TEXT, response TEXT)
+    ''')
+    conn.commit()
     # Streamlit UI
     #st.title('')
     st.markdown("<h1 style='text-align: center;'>Automate the entry <br> of your clients' tax data</h1>", unsafe_allow_html=True)
@@ -235,9 +235,7 @@ if authentication_status:
     
     if uploaded_files:
         # Display a "waiting" sign for files that are not yet processed
-        if st.button('Process All Files'):
-            
-    
+        if st.button('Process All Files'):   
             for uploaded_file in uploaded_files:
                 placeholders = [st.empty() for _ in unprocessed_files] if unprocessed_files else []
                 for i, file in enumerate(unprocessed_files):
