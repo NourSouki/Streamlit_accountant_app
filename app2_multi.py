@@ -1,4 +1,4 @@
-#import streamlit as st
+import streamlit as st
 from PIL import Image
 from io import BytesIO
 import pandas as pd
@@ -16,18 +16,24 @@ from yaml.loader import SafeLoader
 
 #hashed_passwords = stauth.Hasher(['abc', 'def']).generate()
 
+# Load configuration
 with open('config.yaml') as file:
     config = yaml.load(file, Loader=SafeLoader)
-    
+
+# Create an authenticator object
 authenticator = stauth.Authenticate(
-    config['credentials'],
-    config['cookie']['name'],
-    config['cookie']['key'],
-    config['cookie']['expiry_days'],
-    config['preauthorized']
+    credentials=config['credentials'],
+    cookie_name='some_cookie_name',
+    key='some_signature_key',
+    cookie_expiry_days=config['cookie']['expiry_days']
 )
 
-name, authentication_status, username = authenticator.login('Login', 'main')
+# Login
+fields = {
+    'username': 'Username',
+    'password': 'Password'
+}
+name, authentication_status, username = authenticator.login(fields)
 
 if authentication_status:
     authenticator.logout('Logout', 'main')
