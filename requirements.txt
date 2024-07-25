@@ -1,11 +1,11 @@
 streamlit
-Pillow==10.4.0
-pandas==1.4.4
+Pillow
+pandas
 fitz==0.0.1.dev2
 PyMuPDF==1.24.7
-opencv-python-headless==4.8.0.74
-numpy==1.26.4
-pytesseract==0.3.10
+opencv-python-headless
+numpy
+pytesseract
 google-generativeai
 streamlit-aggrid
-frontend==0.0.3
+frontend
