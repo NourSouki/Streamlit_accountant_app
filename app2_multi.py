@@ -220,6 +220,7 @@ def process_file(uploaded_file, selected_questions,cursor):
 if authentication_status:
     conn = get_user_db(username)
     c = conn.cursor()
+    st.write(f"Current working directory: {os.getcwd()}")
 
     # Create table if not exists
     c.execute('''
