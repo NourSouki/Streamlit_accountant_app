@@ -1,8 +1,8 @@
 streamlit
 Pillow
 pandas
-fitz
-PyMuPDF
+fitz==0.0.1.dev2
+PyMuPDF==1.24.7
 opencv-python-headless
 numpy
 pytesseract
