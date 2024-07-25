@@ -13,13 +13,22 @@ import streamlit_authenticator as stauth
 import os
 
 # Authentication setup
-usernames = ['user1', 'user2']
-passwords = ['password1', 'password2']
+credentials = {
+    "usernames": {
+        "user1": {
+            "name": "User One",
+            "password": "password1"
+        },
+        "user2": {
+            "name": "User Two",
+            "password": "password2"
+        }
+    }
+}
 
 # Create an authenticator object
 authenticator = stauth.Authenticate(
-    usernames=usernames,
-    passwords=passwords,
+    credentials=credentials,
     cookie_name='some_cookie_name',
     key='some_signature_key',
     cookie_expiry_days=30
