@@ -9,13 +9,28 @@ import cv2
 import numpy as np
 import pytesseract
 import google.generativeai as genai
+import streamlit_authenticator as stauth
 import os
-#from dotenv import load_dotenv
-# Specify the Path to the Tesseract Executable
-#pytesseract.pytesseract.tesseract_cmd = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+
+# Define usernames and passwords
+usernames = ['user1', 'user2']
+passwords = ['password1', 'password2']
+
+# Create an authenticator object
+authenticator = stauth.Authenticate(usernames, passwords, 'some_cookie_name', 'some_signature_key', cookie_expiry_days=30)
+
+# Login
+name, authentication_status, username = authenticator.login('Login', 'main')
+
+if authentication_status:
+    st.write(f'Welcome *{name}*')
+    st.sidebar.success('You are logged in')
+elif authentication_status == False:
+    st.error('Username/password is incorrect')
+elif authentication_status == None:
+    st.warning('Please enter your username and password')
 
 
-#load_dotenv()
 GOOGLE_API_KEY = st.secrets["GOOGLE_API_KEY"]
 genai.configure(api_key=GOOGLE_API_KEY)
 
@@ -38,16 +53,23 @@ safety_settings = [
 # Load the GenerativeAI model
 model = genai.GenerativeModel(model_name="gemini-1.5-flash-001", generation_config=MODEL_CONFIG, safety_settings=safety_settings)
 
-# Initialize SQLite database
-conn = sqlite3.connect('invoices.db')
-c = conn.cursor()
 
-# Create table if not exists
-c.execute('''
-    CREATE TABLE IF NOT EXISTS invoices
-    (id INTEGER PRIMARY KEY, invoice_name TEXT, question TEXT, response TEXT)
-''')
-conn.commit()
+def get_user_db(username):
+    db_path = f"{username}_invoices.db"
+    conn = sqlite3.connect(db_path)
+    return conn
+
+# Get the database connection for the logged-in user
+if authentication_status:
+    conn = get_user_db(username)
+    c = conn.cursor()
+
+    # Create table if not exists
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS invoices
+        (id INTEGER PRIMARY KEY, invoice_name TEXT, question TEXT, response TEXT)
+    ''')
+    conn.commit()
 
 # Initialize session state variables if they don't already exist
 if 'responses_deleted' not in st.session_state:
@@ -101,9 +123,9 @@ def process_image_with_geminiai(image_bytes, system_prompt, user_prompt):
     response = model.generate_content(input_prompt)
     return response.text
 
-def save_response_to_db(invoice_name, question, response_text):
-    c.execute('INSERT INTO invoices (invoice_name, question, response) VALUES (?, ?, ?)', (invoice_name, question, response_text))
-    conn.commit()
+def save_response_to_db(cursor, invoice_name, question, response_text):
+    cursor.execute('INSERT INTO invoices (invoice_name, question, response) VALUES (?, ?, ?)', (invoice_name, question, response_text))
+    cursor.connection.commit()
 
 def fetch_all_responses():
     c.execute('SELECT * FROM invoices')
@@ -146,7 +168,7 @@ def answer_question(quest, image, uploaded_file_name):
     gemini_response = process_image_with_geminiai(image_bytes.getvalue(), extended_system_prompt, user_prompt)
     return gemini_response
 
-def process_file(uploaded_file, selected_questions):
+def process_file(uploaded_file, selected_questions,cursor):
     try:
         global system_prompt
         system_prompt = """
@@ -179,97 +201,97 @@ def process_file(uploaded_file, selected_questions):
             if selected_question == 'Tout extraire':
                 for quest in questions_back[1:-1]:
                     gemini_response = answer_question(quest, image, uploaded_file.name)
-                    save_response_to_db(uploaded_file.name, quest_back_front[quest], gemini_response)
+                    save_response_to_db(cursor, uploaded_file.name, quest_back_front[quest], gemini_response)
                 break
             else:
                 gemini_response = answer_question(selected_question, image, uploaded_file.name)
-                save_response_to_db(uploaded_file.name, quest_back_front[selected_question], gemini_response)
+                save_response_to_db(cursor, uploaded_file.name, quest_back_front[selected_question], gemini_response)
         st.success(f"Response for {uploaded_file.name} saved successfully.")
         image_placeholder.empty()
     except Exception as e:
         st.error(f"Error processing {uploaded_file.name}: {e}")
 
-
-# Streamlit UI
-#st.title('')
-st.markdown("<h1 style='text-align: center;'>Automate the entry <br> of your clients' tax data</h1>", unsafe_allow_html=True)
-st.markdown("<br>", unsafe_allow_html=True)
-st.markdown("<h4 '>Upload your invoice images or PDFs and select questions to process them</h4>", unsafe_allow_html=True)
-#st.subheader('')
-
-questions_back = ['Tout extraire', 'Assujetti à la TVA ?', 'N° Etab Secondaire.Code Catégorie.Code TVA.Matricule Fiscal', 'Nom et Prénom première ligne', 'Raison Sociale deuxième ligne', 'Activité', 'Date de début de l\'activité', 'Adresse', 'Other']
-
-questions_front=['Tout extraire' , 'TVA', 'Matricule Fiscal', 'Nom et Prénom', 'Raison Sociale','Activité', 'Date de début de l\'activité', 
-            "Adresse", "Question Personnalisée"]
-
-select_questions = st.multiselect('Select questions:', questions_front)
-
-selected_questions= [quest_front_back[quest] for quest in select_questions]
-
-uploaded_files = st.file_uploader("Upload Invoice Images/Pdfs", type=['jpg', 'png', 'pdf'], accept_multiple_files=True)
-# Initialize lists to track processed and unprocessed files
-processed_files = []
-unprocessed_files = [file.name for file in uploaded_files] if uploaded_files else []
-
-if uploaded_files:
-    # Display a "waiting" sign for files that are not yet processed
-    if st.button('Process All Files'):
+if authentication_status:
+    # Streamlit UI
+    #st.title('')
+    st.markdown("<h1 style='text-align: center;'>Automate the entry <br> of your clients' tax data</h1>", unsafe_allow_html=True)
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("<h4 '>Upload your invoice images or PDFs and select questions to process them</h4>", unsafe_allow_html=True)
+    #st.subheader('')
+    
+    questions_back = ['Tout extraire', 'Assujetti à la TVA ?', 'N° Etab Secondaire.Code Catégorie.Code TVA.Matricule Fiscal', 'Nom et Prénom première ligne', 'Raison Sociale deuxième ligne', 'Activité', 'Date de début de l\'activité', 'Adresse', 'Other']
+    
+    questions_front=['Tout extraire' , 'TVA', 'Matricule Fiscal', 'Nom et Prénom', 'Raison Sociale','Activité', 'Date de début de l\'activité', 
+                "Adresse", "Question Personnalisée"]
+    
+    select_questions = st.multiselect('Select questions:', questions_front)
+    
+    selected_questions= [quest_front_back[quest] for quest in select_questions]
+    
+    uploaded_files = st.file_uploader("Upload Invoice Images/Pdfs", type=['jpg', 'png', 'pdf'], accept_multiple_files=True)
+    # Initialize lists to track processed and unprocessed files
+    processed_files = []
+    unprocessed_files = [file.name for file in uploaded_files] if uploaded_files else []
+    
+    if uploaded_files:
+        # Display a "waiting" sign for files that are not yet processed
+        if st.button('Process All Files'):
+            
+    
+            for uploaded_file in uploaded_files:
+                placeholders = [st.empty() for _ in unprocessed_files] if unprocessed_files else []
+                for i, file in enumerate(unprocessed_files):
+                    placeholders[i].write(f'Waiting to process: {file}')
+                with st.spinner(f'Processing {uploaded_file.name}...'):
+                    process_file(uploaded_file, selected_questions,c)
+                processed_files.append(uploaded_file.name)
+                for i, file in enumerate(unprocessed_files):
+                    placeholders[i].empty()
+                unprocessed_files.remove(uploaded_file.name)
         
 
-        for uploaded_file in uploaded_files:
-            placeholders = [st.empty() for _ in unprocessed_files] if unprocessed_files else []
-            for i, file in enumerate(unprocessed_files):
-                placeholders[i].write(f'Waiting to process: {file}')
-            with st.spinner(f'Processing {uploaded_file.name}...'):
-                process_file(uploaded_file, selected_questions)
-            processed_files.append(uploaded_file.name)
-            for i, file in enumerate(unprocessed_files):
-                placeholders[i].empty()
-            unprocessed_files.remove(uploaded_file.name)
-        
 
-
-# Displaying responses
-show_responses = st.button('Show all responses')
-if show_responses:
-    rows = fetch_all_responses()
-    if rows:
-        df = pd.DataFrame(rows, columns=['ID', 'Invoice Name', 'Question', 'Response'])
-        st.dataframe(df)
-    else:
-        st.write("No responses found.")
-
-# Button to delete records without confirmation
-if st.button('Delete all responses'):
-    try:
-        c.execute('DELETE FROM invoices')
-        conn.commit()
-        st.success("All responses deleted successfully.")
-        st.session_state.responses_deleted = True
-    except Exception as e:
-        st.error(f"Error deleting responses: {e}")
-
-if not st.session_state.responses_deleted:
-    st.write("Responses have not been deleted.")
-
-if show_responses:
-    invoices = ['patente','contrat']
-    for invoice_type in invoices:
-        df_invoice = df[df['Invoice Name'].str.contains(invoice_type, case=False)]
-        st.write(f"DataFrame for {invoice_type}:")
-
-        gb = GridOptionsBuilder.from_dataframe(df_invoice)
-        gb.configure_pagination(paginationAutoPageSize=True)
-        gb.configure_default_column(editable=True, groupable=True)
-
-        grid_options = gb.build()
-
-        grid_response = AgGrid(
-            df_invoice,
-            gridOptions=grid_options,
-            columns_auto_size_mode=ColumnsAutoSizeMode.FIT_ALL_COLUMNS_TO_VIEW,
-            fit_columns_on_grid_load=True,
-            update_mode=GridUpdateMode.SELECTION_CHANGED,
-            reload_data=True,
-            on_grid_update=handle_grid_update
-        )
+    # Displaying responses
+    show_responses = st.button('Show all responses')
+    if show_responses:
+        rows = fetch_all_responses(c)
+        if rows:
+            df = pd.DataFrame(rows, columns=['ID', 'Invoice Name', 'Question', 'Response'])
+            st.dataframe(df)
+        else:
+            st.write("No responses found.")
+    
+    # Button to delete records without confirmation
+    if st.button('Delete all responses'):
+        try:
+            c.execute('DELETE FROM invoices')
+            conn.commit()
+            st.success("All responses deleted successfully.")
+            st.session_state.responses_deleted = True
+        except Exception as e:
+            st.error(f"Error deleting responses: {e}")
+    
+    if not st.session_state.responses_deleted:
+        st.write("Responses have not been deleted.")
+    
+    if show_responses:
+        invoices = ['patente','contrat']
+        for invoice_type in invoices:
+            df_invoice = df[df['Invoice Name'].str.contains(invoice_type, case=False)]
+            st.write(f"DataFrame for {invoice_type}:")
+    
+            gb = GridOptionsBuilder.from_dataframe(df_invoice)
+            gb.configure_pagination(paginationAutoPageSize=True)
+            gb.configure_default_column(editable=True, groupable=True)
+    
+            grid_options = gb.build()
+    
+            grid_response = AgGrid(
+                df_invoice,
+                gridOptions=grid_options,
+                columns_auto_size_mode=ColumnsAutoSizeMode.FIT_ALL_COLUMNS_TO_VIEW,
+                fit_columns_on_grid_load=True,
+                update_mode=GridUpdateMode.SELECTION_CHANGED,
+                reload_data=True,
+                on_grid_update=handle_grid_update
+            )
