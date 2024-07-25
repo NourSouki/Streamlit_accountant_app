@@ -1,0 +1,17 @@
+credentials:
+  usernames:
+    achraf:
+      email: achraf@gmail.com
+      name: Mohamed Achraf Besbes
+      password: abc 
+    nour:
+      email: nour@gmail.com
+      name: Nour Souki
+      password: def
+cookie:
+  expiry_days: 30
+  key: "accountant"
+  name: random_cookie_name
+preauthorized:
+  emails:
+  - artiweb@gmail.com
